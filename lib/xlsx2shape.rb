@@ -15,13 +15,13 @@ module XLSX2Shape
       else
         headers = sheet.row(1)
         uri = headers.first
-        shapes[uri] = ["<#{uri}> a sh:NodeShape"]
+        shapes[format_pvalue(uri, nil, prefix)] = ["#{format_pvalue(uri, nil, prefix)} a sh:NodeShape"]
         order = 1
         sheet.each_with_index do |row, idx|
           row_h = map_xlsx_row_headers(row, headers)
           case row.first
           when "sh:targetClass"
-            shapes[uri] << "#{format_property("sh:targetClass", row[1])}" if row[1]
+            shapes[format_pvalue(uri, nil, prefix)] << "#{format_property("sh:targetClass", row[1])}" if row[1]
           when "sh:property"
             prop_values = []
             headers[1..-1].each do |prop|
@@ -34,7 +34,7 @@ module XLSX2Shape
               when "sh:minCount", "sh:maxCount"
                 prop_values << format_property(prop, row_h[prop].to_i)
               when "sh:languageIn"
-                prop_values << "  sh:languageIn (#{row_h[prop].split.map{|e| format_pvalue(e) }.join(" ")})"
+                prop_values << "  sh:languageIn (#{row_h[prop].split.map { |e| format_pvalue(e) }.join(" ")})"
               when "sh:uniqueLang"
                 case row_h[prop]
                 when "true"
@@ -51,18 +51,18 @@ module XLSX2Shape
             prop_values << format_property("sh:order", order)
             order += 1
             str = prop_values.join(";\n  ")
-            shapes[uri] << "  sh:property [\n  #{str}\n  ]"
+            shapes[format_pvalue(uri, nil, prefix)] << "  sh:property [\n  #{str}\n  ]"
           when "sh:or"
-            shapes[uri] << "  sh:or (#{row[1..-1].select{|e| not e.empty? }.map{|e| format_pvalue(e) }.join(" ")})"
+            shapes[format_pvalue(uri, nil, prefix)] << "  sh:or (#{row[1..-1].select { |e| not e.empty? }.map { |e| format_pvalue(e) }.join(" ")})"
           end
         end
       end
     end
     result = ""
-    prefix.sort_by{|k,v| [k,v] }.each do |prefix, val|
+    prefix.sort_by { |k, v| [k, v] }.each do |prefix, val|
       result << "@prefix #{prefix}: <#{val}>.\n"
     end
-    shapes.sort_by{|uri, val| uri }.each do |uri, val|
+    shapes.sort_by { |uri, val| uri }.each do |uri, val|
       result << "\n"
       result << shapes[uri].join(";\n")
       result << ".\n"
@@ -77,7 +77,8 @@ module XLSX2Shape
     end
     hash
   end
-  def format_pvalue(value, lang = nil)
+
+  def format_pvalue(value, lang = nil, prefix = {})
     str = ""
     if value.is_a? Hash
       result = ["["]
@@ -96,6 +97,13 @@ module XLSX2Shape
       str = value
     elsif value =~ /\A(.+?)\^\^(\w+:\w+)\z/
       str = %Q|"#{escape_turtle($1)}"^^#{$2}|
+    elsif prefix.any? { |_, v| value.start_with?(v) }
+      # URI を prefix:qname に変換
+      prefix.each do |key, val|
+        if value.start_with?(val)
+          return "#{key}:#{value.sub(val, '')}"
+        end
+      end
     elsif lang
       str = %Q|"#{escape_turtle(value)}"@#{lang}|
     else
@@ -103,19 +111,19 @@ module XLSX2Shape
     end
     str
   end
+
   def format_property(property, value, lang = nil)
     if value.is_a? Array
-      value = value.sort_by{|e|
-        format_pvalue(e)
-      }.map do |e|
+      value = value.sort_by { |e| format_pvalue(e) }.map do |e|
         format_pvalue(e)
       end
-      %Q|  #{property} #{ value.join(", ") }|
+      %Q|  #{property} #{value.join(", ")}|
     else
       value = format_pvalue(value, lang)
       %Q|  #{property} #{value}|
     end
   end
+
   def escape_turtle(str)
     str.gsub(/\\/){ '\\\\' }.gsub(/"/){ '\"' }
   end
