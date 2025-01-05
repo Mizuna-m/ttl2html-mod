@@ -89,23 +89,33 @@ module XLSX2Shape
 
   def format_property(property, value, lang = nil, prefix = {})
     # 値を分割（改行のみ考慮）
-    values = split_values(value).map { |v| format_pvalue(v.strip, lang, prefix) }
+    values = split_values(value).map do |v|
+      v = v.strip if v.is_a?(String) # 文字列の場合のみ strip を適用
+      format_pvalue(v, lang, prefix)
+    end
 
     # 複数目的語をカンマ区切りで出力
     %(  #{property} #{values.join(', ')})
   end
 
   def split_values(value)
-    # 値を改行で分割するが、カンマ区切りの場合は分割しない
-    if value.to_s.include?("\n")
+    if value.is_a?(Numeric)
+      # 数値はそのまま返す
+      [value]
+    elsif value.to_s.include?("\n")
+      # 改行で分割
       value.to_s.split("\n").map(&:strip)
     else
-      [value.to_s.strip] # 改行がなければそのまま配列化
+      # 改行がない場合はそのまま配列化
+      [value.to_s.strip]
     end
   end
 
   def format_pvalue(value, lang = nil, _prefix = {})
-    if value =~ %r{\Ahttps?://}
+    if value.is_a?(Numeric)
+      # 数値はそのまま出力
+      value.to_s
+    elsif value =~ %r{\Ahttps?://}
       # IRIは山かっこで囲む
       %(<#{value}>)
     elsif value =~ /\A\w+:[\w\-.]+\Z/
