@@ -123,8 +123,9 @@ module XLSX2Shape
     elsif value =~ %r{\Ahttps?://}
       # IRIは山かっこで囲む
       %(<#{value}>)
-    elsif value =~ /^([A-Za-z_][\w.-]*:)?[A-Za-z_][\w.-]*$/
+    elsif value =~ /^[A-Za-z_][\w.\-]*:[A-Za-z_][\w.\-]*$/
       # QNameはそのまま出力
+      # QName definition: based on w3c, but LocalPart only not accepted (require ":")
       value
     elsif value =~ /(.+?)@([a-zA-Z-]+)\z/
       # `値@言語タグ` の形式であれば言語タグ付きリテラルとして処理
