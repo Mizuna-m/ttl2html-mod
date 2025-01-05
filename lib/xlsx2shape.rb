@@ -32,15 +32,15 @@ module XLSX2Shape
 
               case prop
               when /@(\w+)\z/
-                lang = ::Regexp.last_match(1)
+                lang = Regexp.last_match(1)
                 property_name = prop.sub(/@(\w+)\z/, '')
                 prop_values << format_property(property_name, row_h[prop], lang, prefix)
               when 'sh:minCount', 'sh:maxCount'
                 prop_values << format_property(prop, row_h[prop].to_i, nil, prefix)
               when 'sh:languageIn'
-                prop_values << "  sh:languageIn (#{row_h[prop].split.map do |e|
-                  format_pvalue(e, nil, prefix)
-                end.join(' ')})"
+                # 言語リストの特別処理
+                values = split_values(row_h[prop]).map { |e| format_pvalue(e, nil, prefix) }
+                prop_values << %|  sh:languageIn (#{values.join(' ')})|
               when 'sh:uniqueLang'
                 case row_h[prop]
                 when 'true'
@@ -51,6 +51,7 @@ module XLSX2Shape
                   logger.warn "sh:uniqueLang value unknown: #{row_h[prop]} at #{uri}"
                 end
               else
+                # 通常のプロパティ処理
                 prop_values << format_property(prop, row_h[prop], nil, prefix)
               end
             end
@@ -86,51 +87,42 @@ module XLSX2Shape
     hash
   end
 
-  def format_pvalue(value, lang = nil, prefix = {})
-    str = ''
-    if value.is_a? Hash
-      result = ['[']
-      array = []
-      value.keys.sort.each do |k|
-        array << format_property(k, value[k], nil, prefix)
-      end
-      result << array.join(";\n")
-      result << '  ]'
-      str = result.join("\n")
-    elsif value.is_a? Integer
-      str = value
-    elsif value =~ %r{\Ahttps?://}
-      str = %(<#{value}>)
-    elsif value =~ /\A\w+:[\w\-.]+\Z/
-      str = value
-    elsif value =~ /\A(.+?)\^\^(\w+:\w+)\z/
-      str = %("#{escape_turtle(::Regexp.last_match(1))}"^^#{::Regexp.last_match(2)})
-    elsif prefix.any? { |_, v| value.start_with?(v) }
-      # URI を prefix:qname に変換
-      prefix.each do |key, val|
-        return "#{key}:#{value.sub(val, '')}" if value.start_with?(val)
-      end
-    elsif lang
-      str = %("#{escape_turtle(value)}"@#{lang})
-    else
-      str = %("#{escape_turtle(value)}")
-    end
-    str
-  end
-
   def format_property(property, value, lang = nil, prefix = {})
-    # value が文字列の場合は改行で分割して複数の目的語に対応
-    values = if value.is_a?(String)
-               value.split("\n").map { |v| format_pvalue(v.strip, lang, prefix) }
-             else
-               # 非文字列の場合はそのままフォーマット
-               [format_pvalue(value, lang, prefix)]
-             end
-    # 複数の目的語をカンマ区切りで出力
+    # 値を分割（改行またはカンマ区切り）
+    values = split_values(value).map { |v| format_pvalue(v.strip, lang, prefix) }
+
+    # 複数目的語をカンマ区切りで出力
     %(  #{property} #{values.join(', ')})
   end
 
+  def split_values(value)
+    # 値を改行またはカンマで分割し、エスケープされた @ を考慮して処理
+    value.to_s.split(/[\n,]/).map(&:strip)
+  end
+
+  def format_pvalue(value, lang = nil, _prefix = {})
+    if value =~ %r{\Ahttps?://}
+      # IRIは山かっこで囲む
+      %(<#{value}>)
+    elsif value =~ /\A\w+:[\w\-.]+\Z/
+      # QNameはそのまま出力
+      value
+    elsif value =~ /(.+?)@([a-zA-Z-]+)\z/
+      # `値@言語タグ` の形式であれば言語タグ付きリテラルとして処理
+      literal = ::Regexp.last_match(1).strip
+      lang = ::Regexp.last_match(2)
+      %("#{escape_turtle(literal)}"@#{lang})
+    elsif value.include?('\@')
+      # エスケープされた `@` を平文として扱う
+      %("#{escape_turtle(value.gsub('\@', '@'))}")
+    else
+      # 通常のリテラル
+      %("#{escape_turtle(value)}")
+    end
+  end
+
   def escape_turtle(str)
+    # Turtleでエスケープする必要のある文字を処理
     str.gsub(/\\/) { '\\\\' }.gsub(/"/) { '\"' }
   end
 end
