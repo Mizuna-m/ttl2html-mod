@@ -24,6 +24,11 @@ module XLSX2Shape
             if row[1]
               shapes[format_pvalue(uri, nil,
                                    prefix)] << "#{format_property('sh:targetClass', row[1], nil, prefix)}"
+              # row[2] を rdfs:label として追加
+              if row[2] && !row[2].strip.empty?
+                format_pvalue(row[2].strip, nil, prefix)
+                shapes[format_pvalue(uri, nil, prefix)] << "#{format_property('rdfs:label', row[2].strip, nil, prefix)}"
+              end
             end
           when 'sh:property'
             prop_values = []
