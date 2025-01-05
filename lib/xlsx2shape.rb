@@ -123,7 +123,7 @@ module XLSX2Shape
     elsif value =~ %r{\Ahttps?://}
       # IRIは山かっこで囲む
       %(<#{value}>)
-    elsif value =~ /\A\w+:[\w\-.]+\Z/
+    elsif value =~ /^([A-Za-z_][\w.-]*:)?[A-Za-z_][\w.-]*$/
       # QNameはそのまま出力
       value
     elsif value =~ /(.+?)@([a-zA-Z-]+)\z/
