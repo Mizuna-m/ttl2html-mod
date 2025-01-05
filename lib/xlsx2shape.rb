@@ -88,7 +88,7 @@ module XLSX2Shape
   end
 
   def format_property(property, value, lang = nil, prefix = {})
-    # 値を分割（改行またはカンマ区切り）
+    # 値を分割（改行のみ考慮）
     values = split_values(value).map { |v| format_pvalue(v.strip, lang, prefix) }
 
     # 複数目的語をカンマ区切りで出力
@@ -96,8 +96,12 @@ module XLSX2Shape
   end
 
   def split_values(value)
-    # 値を改行またはカンマで分割し、エスケープされた @ を考慮して処理
-    value.to_s.split(/[\n,]/).map(&:strip)
+    # 値を改行で分割するが、カンマ区切りの場合は分割しない
+    if value.to_s.include?("\n")
+      value.to_s.split("\n").map(&:strip)
+    else
+      [value.to_s.strip] # 改行がなければそのまま配列化
+    end
   end
 
   def format_pvalue(value, lang = nil, _prefix = {})
