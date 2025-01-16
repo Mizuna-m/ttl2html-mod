@@ -24,6 +24,11 @@ module XLSX2Shape
             if row[1]
               shapes[format_pvalue(uri, nil,
                                    prefix)] << "#{format_property('sh:targetClass', row[1], nil, prefix)}"
+              # row[2] を rdfs:label として追加
+              if row[2] && !row[2].strip.empty?
+                format_pvalue(row[2].strip, nil, prefix)
+                shapes[format_pvalue(uri, nil, prefix)] << "#{format_property('rdfs:label', row[2].strip, nil, prefix)}"
+              end
             end
           when 'sh:property'
             prop_values = []
@@ -88,24 +93,39 @@ module XLSX2Shape
   end
 
   def format_property(property, value, lang = nil, prefix = {})
-    # 値を分割（改行またはカンマ区切り）
-    values = split_values(value).map { |v| format_pvalue(v.strip, lang, prefix) }
+    # 値を分割（改行のみ考慮）
+    values = split_values(value).map do |v|
+      v = v.strip if v.is_a?(String) # 文字列の場合のみ strip を適用
+      format_pvalue(v, lang, prefix)
+    end
 
     # 複数目的語をカンマ区切りで出力
     %(  #{property} #{values.join(', ')})
   end
 
   def split_values(value)
-    # 値を改行またはカンマで分割し、エスケープされた @ を考慮して処理
-    value.to_s.split(/[\n,]/).map(&:strip)
+    if value.is_a?(Numeric)
+      # 数値はそのまま返す
+      [value]
+    elsif value.to_s.include?("\n")
+      # 改行で分割
+      value.to_s.split("\n").map(&:strip)
+    else
+      # 改行がない場合はそのまま配列化
+      [value.to_s.strip]
+    end
   end
 
   def format_pvalue(value, lang = nil, _prefix = {})
-    if value =~ %r{\Ahttps?://}
+    if value.is_a?(Numeric)
+      # 数値はそのまま出力
+      value.to_s
+    elsif value =~ %r{\Ahttps?://}
       # IRIは山かっこで囲む
       %(<#{value}>)
-    elsif value =~ /\A\w+:[\w\-.]+\Z/
+    elsif value =~ /^[A-Za-z_][\w.\-]*:[A-Za-z_][\w.\-]*$/
       # QNameはそのまま出力
+      # QName definition: based on w3c, but LocalPart only not accepted (require ":")
       value
     elsif value =~ /(.+?)@([a-zA-Z-]+)\z/
       # `値@言語タグ` の形式であれば言語タグ付きリテラルとして処理

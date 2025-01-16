@@ -1,7 +1,7 @@
 # ttl2html-mod
 @Mizuna-m
 
-[ttl2html](https://github.com/masao/ttl2html/) の動作を拡張します。
+[ttl2html](https://github.com/masao/ttl2html/) の動作を拡張します。RubyGemsでの動作は未確認です。`bin/`以下の実行ファイルを直接利用します。
 
 ## xlsx2shape
 - `sh:NodeShape` クラスのインスタンスを、URIだけでなくQNameでも処理できるようにしました。
@@ -20,4 +20,5 @@
   > ```
   
   ※ ttl2htmlでは、表のヘッダ行でプロパティ名に対してアットマークで言語タグを指定する仕様となっています（例: `skos:example@ja`）。
+- `sh:targetClass` 行の2列目の値を、Shapeの `rdfs:label` の値として利用します。
 
