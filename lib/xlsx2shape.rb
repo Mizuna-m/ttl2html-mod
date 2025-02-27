@@ -30,6 +30,14 @@ module XLSX2Shape
                 shapes[format_pvalue(uri, nil, prefix)] << "#{format_property('rdfs:label', row[2].strip, nil, prefix)}"
               end
             end
+
+          when 'sh:filterShape'
+            if row[1]
+              # filterShape の URI を生成
+              filter_shape_uri = format_pvalue(row[1], nil, prefix)
+              shapes[format_pvalue(uri, nil, prefix)] << "  sh:filterShape #{filter_shape_uri}"
+            end
+
           when 'sh:property'
             prop_values = []
             headers[1..-1].each do |prop|
