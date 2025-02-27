@@ -21,4 +21,5 @@
   
   ※ ttl2htmlでは、表のヘッダ行でプロパティ名に対してアットマークで言語タグを指定する仕様となっています（例: `skos:example@ja`）。
 - `sh:targetClass` 行の2列目の値を、Shapeの `rdfs:label` の値として利用します。
+- [SHACL Advanced Features](https://www.w3.org/TR/shacl-af/) の機能である `sh:filterShape` プロパティを受け付けます。
 
