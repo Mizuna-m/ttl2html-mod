@@ -128,7 +128,8 @@ module XLSX2Shape
     if value.is_a?(Numeric)
       # 数値はそのまま出力
       value.to_s
-    elsif value =~ %r{\Ahttps?://}
+    # elsif value =~ %r{\Ahttps?://}
+    elsif value =~ %r{\A[a-zA-Z][a-zA-Z0-9+.-]*://[a-zA-Z0-9\-._~%!$&'()*+,;=:@]+(?:/[a-zA-Z0-9\-._~%!$&'()*+,;=:@]*)*(?:\?[a-zA-Z0-9\-._~%!$&'()*+,;=:@/?]*)?(?:#[a-zA-Z0-9\-._~%!$&'()*+,;=:@/?]*)?\z}
       # IRIは山かっこで囲む
       %(<#{value}>)
     elsif value =~ /^[A-Za-z_][\w.\-]*:[A-Za-z_][\w.\-]*$/
