@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+# 現在のディレクトリの `lib` を優先的にロードする
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
 require "getoptlong"
 require "ttl2html"
 
