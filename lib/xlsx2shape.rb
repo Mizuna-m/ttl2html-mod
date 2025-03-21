@@ -72,10 +72,21 @@ module XLSX2Shape
             order += 1
             str = prop_values.join(";\n  ")
             shapes[format_pvalue(uri, nil, prefix)] << "  sh:property [\n  #{str}\n  ]"
+          # when 'sh:or'
+          #   shapes[format_pvalue(uri, nil, prefix)] << "  sh:or (#{row[1..-1].select do |e|
+          #     !e.empty?
+          #   end.map { |e| format_pvalue(e, nil, prefix) }.join(' ')})"
+          # end
           when 'sh:or'
-            shapes[format_pvalue(uri, nil, prefix)] << "  sh:or (#{row[1..-1].select do |e|
-              !e.empty?
-            end.map { |e| format_pvalue(e, nil, prefix) }.join(' ')})"
+            or_values = row[1..-1].select { |e| !e.to_s.empty? }.map do |e|
+              # もし e が [ と ] で囲まれている場合、そのまま出力
+              if e.strip.start_with?('[') && e.strip.end_with?(']')
+                e.strip
+              else
+                format_pvalue(e, nil, prefix)
+              end
+            end
+            shapes[format_pvalue(uri, nil, prefix)] << "  sh:or (\n    #{or_values.join("\n    ")}\n  )"
           end
         end
       end
@@ -128,7 +139,8 @@ module XLSX2Shape
     if value.is_a?(Numeric)
       # 数値はそのまま出力
       value.to_s
-    elsif value =~ %r{\Ahttps?://}
+    # elsif value =~ %r{\Ahttps?://}
+    elsif value =~ %r{\A[a-zA-Z][a-zA-Z0-9+.-]*://[a-zA-Z0-9\-._~%!$&'()*+,;=:@]+(?:/[a-zA-Z0-9\-._~%!$&'()*+,;=:@]*)*(?:\?[a-zA-Z0-9\-._~%!$&'()*+,;=:@/?]*)?(?:#[a-zA-Z0-9\-._~%!$&'()*+,;=:@/?]*)?\z}
       # IRIは山かっこで囲む
       %(<#{value}>)
     elsif value =~ /^[A-Za-z_][\w.\-]*:[A-Za-z_][\w.\-]*$/

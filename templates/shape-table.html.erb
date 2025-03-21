@@ -45,11 +45,11 @@
         <%- if property[:node_mode] == :or -%>
         <%=h t("shape-table.blank-node-or-structure") %>
         <%- property[:nodes].each do |e| -%>
-          <div class="blank_node"><%= e.sub(/class="table"/, 'class="table table-condensed"') %></div>
+          <div class="blank_node"><%= e ? e.sub(/class="table"/, 'class="table table-condensed"') : '' %></div>
         <%- end -%>
         <%- else -%>
         <%=h t("shape-table.blank-node-structure") %>
-        <div class="blank_node"><%= property[:nodes].sub(/class="table"/, 'class="table table-condensed"') %></div>
+        <div class="blank_node"><%= property[:nodes] ? property[:nodes].sub(/class="table"/, 'class="table table-condensed"') : '' %></div>
         <%- end -%>
       </td>
     </tr>
