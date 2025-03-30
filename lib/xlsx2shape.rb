@@ -87,6 +87,17 @@ module XLSX2Shape
               end
             end
             shapes[format_pvalue(uri, nil, prefix)] << "  sh:or (\n    #{or_values.join("\n    ")}\n  )"
+
+          when 'sh:and'
+            and_values = row[1..-1].select { |e| !e.to_s.empty? }.map do |e|
+              # もし e が [ と ] で囲まれている場合、そのまま出力
+              if e.strip.start_with?('[') && e.strip.end_with?(']')
+                e.strip
+              else
+                format_pvalue(e, nil, prefix)
+              end
+            end
+            shapes[format_pvalue(uri, nil, prefix)] << "  sh:and (\n    #{and_values.join("\n    ")}\n  )"
           end
         end
       end
@@ -143,7 +154,7 @@ module XLSX2Shape
     elsif value =~ %r{\A[a-zA-Z][a-zA-Z0-9+.-]*://[a-zA-Z0-9\-._~%!$&'()*+,;=:@]+(?:/[a-zA-Z0-9\-._~%!$&'()*+,;=:@]*)*(?:\?[a-zA-Z0-9\-._~%!$&'()*+,;=:@/?]*)?(?:#[a-zA-Z0-9\-._~%!$&'()*+,;=:@/?]*)?\z}
       # IRIは山かっこで囲む
       %(<#{value}>)
-    elsif value =~ /^[A-Za-z_][\w.\-]*:[A-Za-z_][\w.\-]*$/
+    elsif value =~ /^[A-Za-z_][\w.-]*:[A-Za-z_][\w.-]*$/
       # QNameはそのまま出力
       # QName definition: based on w3c, but LocalPart only not accepted (require ":")
       value

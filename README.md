@@ -23,3 +23,4 @@
 - `sh:targetClass` 行の2列目の値を、Shapeの `rdfs:label` の値として利用します。
 - [SHACL Advanced Features](https://www.w3.org/TR/shacl-af/) の機能である `sh:filterShape` プロパティを受け付けます。
 - `sh:or` の出力をSHACLに準拠させました。collectionの要素を直接Blank Node (`[]`) で記述します。
+- `sh:and` に対応しました。 `sh:or` の使用に準拠して記述できます。
