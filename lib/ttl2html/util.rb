@@ -28,5 +28,17 @@ module TTL2HTML
       #p [uri, path]
       path
     end  
+
+    def expand_rdf_list(data, head)
+      elements = []
+      while head && data[head]
+        item = data[head]['http://www.w3.org/1999/02/22-rdf-syntax-ns#first']&.first
+        elements << item if item
+        head = data[head]['http://www.w3.org/1999/02/22-rdf-syntax-ns#rest']&.first
+        break if head == 'http://www.w3.org/1999/02/22-rdf-syntax-ns#nil'
+      end
+      elements
+    end
+    
   end
 end

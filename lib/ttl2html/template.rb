@@ -87,23 +87,34 @@ module TTL2HTML
           repeatable = true
         end
         nodes = nil
+        # if data[property]['http://www.w3.org/ns/shacl#node']
+        #   node = data[property]['http://www.w3.org/ns/shacl#node'].first
+        #   if data[node]['http://www.w3.org/ns/shacl#or']
+        #     node_or = data[data[node]['http://www.w3.org/ns/shacl#or'].first]
+        #     node_mode = :or
+        #     nodes = []
+        #     nodes << expand_shape(data, node_or['http://www.w3.org/1999/02/22-rdf-syntax-ns#first'].first, prefixes)
+        #     rest = node_or['http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'].first
+        #     while data[rest]
+        #       nodes << expand_shape(data, data[rest]['http://www.w3.org/1999/02/22-rdf-syntax-ns#first'].first,
+        #                             prefixes)
+        #       rest = data[rest]['http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'].first
+        #     end
+        #   else
+        #     nodes = expand_shape(data, node, prefixes)
+        #   end
+        #   # p nodes
+        # end
         if data[property]['http://www.w3.org/ns/shacl#node']
           node = data[property]['http://www.w3.org/ns/shacl#node'].first
-          if data[node]['http://www.w3.org/ns/shacl#or']
-            node_or = data[data[node]['http://www.w3.org/ns/shacl#or'].first]
+          if data[node] && data[node]['http://www.w3.org/ns/shacl#or']
+            list_head = data[node]['http://www.w3.org/ns/shacl#or'].first
+            or_nodes = expand_rdf_list(data, list_head)
             node_mode = :or
-            nodes = []
-            nodes << expand_shape(data, node_or['http://www.w3.org/1999/02/22-rdf-syntax-ns#first'].first, prefixes)
-            rest = node_or['http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'].first
-            while data[rest]
-              nodes << expand_shape(data, data[rest]['http://www.w3.org/1999/02/22-rdf-syntax-ns#first'].first,
-                                    prefixes)
-              rest = data[rest]['http://www.w3.org/1999/02/22-rdf-syntax-ns#rest'].first
-            end
+            nodes = or_nodes.map { |n| expand_shape(data, n, prefixes) }
           else
             nodes = expand_shape(data, node, prefixes)
           end
-          # p nodes
         end
         {
           path: path,
